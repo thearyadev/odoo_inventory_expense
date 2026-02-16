@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_inventory_expense">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <h2>Inventory Expense Report</h2>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <strong>Period:</strong>
+                                <span t-field="doc.date_from"/> to <span t-field="doc.date_to"/>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Company:</strong>
+                                <span t-field="doc.company_id.name"/>
+                            </div>
+                        </div>
+                        
+                        <div class="oe_structure"/>
+                        
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Summary</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm table-borderless mb-0">
+                                            <tr>
+                                                <td>Total Expenses:</td>
+                                                <td class="text-end"><strong t-field="doc.expense_count"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Amount:</td>
+                                                <td class="text-end">
+                                                    <strong t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Total Tax:</td>
+                                                <td class="text-end">
+                                                    <strong t-field="doc.total_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Untaxed Amount:</td>
+                                                <td class="text-end">
+                                                    <strong t-field="doc.total_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="oe_structure"/>
+                        
+                        <h4 class="mt-4">Expense Details</h4>
+                        <table class="table table-sm table-striped mt-2">
+                            <thead>
+                                <tr class="table-secondary">
+                                    <th class="text-start">Date</th>
+                                    <th class="text-start">Expense Name</th>
+                                    <th class="text-end">Total Amount</th>
+                                    <th class="text-end">Tax Amount</th>
+                                    <th class="text-end">Untaxed Amount</th>
+                                    <th class="text-start">Created By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="doc.expense_ids" t-as="expense">
+                                    <td class="text-start"><span t-field="expense.date"/></td>
+                                    <td class="text-start"><span t-field="expense.name"/></td>
+                                    <td class="text-end">
+                                        <span t-field="expense.total_amount" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="expense.tax_amount" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="expense.untaxed_amount" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
+                                    </td>
+                                    <td class="text-start"><span t-field="expense.user_id"/></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-secondary fw-bold">
+                                    <td class="text-start" colspan="2">TOTALS</td>
+                                    <td class="text-end">
+                                        <span t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="doc.total_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="doc.total_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        
+                        <div class="oe_structure"/>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_inventory_expense" model="ir.actions.report">
+        <field name="name">Inventory Expense Report</field>
+        <field name="model">expense.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">inventory_expense.report_inventory_expense</field>
+        <field name="report_file">inventory_expense.report_inventory_expense</field>
+        <field name="print_report_name">'Expense Report - %s to %s' % (object.date_from, object.date_to)</field>
+    </record>
+</odoo>

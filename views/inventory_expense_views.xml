@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="inventory_expense_view_form" model="ir.ui.view">
+        <field name="name">inventory.expense.form</field>
+        <field name="model">inventory.expense</field>
+        <field name="arch" type="xml">
+            <form string="Inventory Expense">
+                <header>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g., Costco Business - Office Supplies"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="total_amount" widget="monetary"/>
+                            <field name="tax_amount" widget="monetary"/>
+                            <field name="untaxed_amount" widget="monetary" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="user_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Receipt">
+                        <field name="receipt_filename" invisible="1"/>
+                        <field name="receipt_image" widget="image" class="oe_avatar"
+                               filename="receipt_filename"
+                               placeholder="Upload receipt image"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1" placeholder="Additional details about this expense..."/>
+                    </group>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View -->
+    <record id="inventory_expense_view_tree" model="ir.ui.view">
+        <field name="name">inventory.expense.tree</field>
+        <field name="model">inventory.expense</field>
+        <field name="arch" type="xml">
+            <list string="Inventory Expenses" decoration-bf="1">
+                <field name="date"/>
+                <field name="name"/>
+                <field name="total_amount" sum="Total" widget="monetary"/>
+                <field name="tax_amount" sum="Total Tax" widget="monetary"/>
+                <field name="untaxed_amount" sum="Untaxed Total" widget="monetary"/>
+                <field name="user_id" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="currency_id" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="inventory_expense_view_search" model="ir.ui.view">
+        <field name="name">inventory.expense.search</field>
+        <field name="model">inventory.expense</field>
+        <field name="arch" type="xml">
+            <search string="Search Expenses">
+                <field name="name" string="Expense Name"/>
+                <field name="date"/>
+                <field name="user_id"/>
+                <filter string="This Month" name="this_month"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter string="This Quarter" name="this_quarter"
+                        domain="[('date', '&gt;=', (context_today() + relativedelta(day=1, months=-((context_today().month - 1) % 3))).strftime('%Y-%m-%d'))]"/>
+                <filter string="This Year" name="this_year"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-01-01'))]"/>
+                <separator/>
+                <filter string="Today" name="today"
+                        domain="[('date', '=', context_today())]"/>
+                <filter string="Yesterday" name="yesterday"
+                        domain="[('date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Date" name="group_date" context="{'group_by': 'date'}"/>
+                    <filter string="Month" name="group_month" context="{'group_by': 'date:month'}"/>
+                    <filter string="Quarter" name="group_quarter" context="{'group_by': 'date:quarter'}"/>
+                    <filter string="Year" name="group_year" context="{'group_by': 'date:year'}"/>
+                    <filter string="Created By" name="group_user" context="{'group_by': 'user_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Pivot View -->
+    <record id="inventory_expense_view_pivot" model="ir.ui.view">
+        <field name="name">inventory.expense.pivot</field>
+        <field name="model">inventory.expense</field>
+        <field name="arch" type="xml">
+            <pivot string="Expense Analysis" sample="1">
+                <field name="date" interval="month" type="row"/>
+                <field name="total_amount" type="measure"/>
+                <field name="tax_amount" type="measure"/>
+                <field name="untaxed_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Graph View -->
+    <record id="inventory_expense_view_graph" model="ir.ui.view">
+        <field name="name">inventory.expense.graph</field>
+        <field name="model">inventory.expense</field>
+        <field name="arch" type="xml">
+            <graph string="Expense Trends" sample="1">
+                <field name="date" interval="month"/>
+                <field name="total_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- Action: All Expenses -->
+    <record id="inventory_expense_action" model="ir.actions.act_window">
+        <field name="name">Inventory Expenses</field>
+        <field name="res_model">inventory.expense</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="search_view_id" ref="inventory_expense_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No expenses recorded yet.
+            </p>
+            <p>
+                Click "New" to log your first inventory expense.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action: Report Wizard -->
+    <record id="expense_report_wizard_action" model="ir.actions.act_window">
+        <field name="name">Generate Expense Report</field>
+        <field name="res_model">expense.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Main Menu -->
+    <menuitem id="menu_inventory_expense_root"
+              name="Inventory Expenses"
+              sequence="40"
+              web_icon="inventory_expense,static/description/icon.png"/>
+
+    <!-- Submenus -->
+    <menuitem id="menu_inventory_expense_expenses"
+              name="Expenses"
+              parent="menu_inventory_expense_root"
+              sequence="1"
+              action="inventory_expense_action"/>
+
+    <menuitem id="menu_inventory_expense_reports"
+              name="Reports"
+              parent="menu_inventory_expense_root"
+              sequence="10"/>
+
+    <menuitem id="menu_inventory_expense_report_wizard"
+              name="Generate Report"
+              parent="menu_inventory_expense_reports"
+              sequence="1"
+              action="expense_report_wizard_action"/>
+
+    <menuitem id="menu_inventory_expense_analysis"
+              name="Analysis"
+              parent="menu_inventory_expense_reports"
+              sequence="5"
+              action="inventory_expense_action"/>
+</odoo>
