@@ -32,7 +32,9 @@ Features:
         "wizard/expense_report_wizard_views.xml",
     ],
     "assets": {
-        "web.assets_backend": [],
+        "web.assets_backend": [
+            "inventory_expense/static/src/scss/inventory_expense.scss",
+        ],
     },
     "installable": True,
     "application": True,

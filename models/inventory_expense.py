@@ -21,25 +21,33 @@ class InventoryExpense(models.Model):
         tracking=True,
         index=True,
     )
-    total_amount = fields.Monetary(
-        string="Total Amount",
+    total_with_tax = fields.Monetary(
+        string="Total Paid",
         required=True,
         currency_field="currency_id",
         tracking=True,
-        help="Total amount paid including tax",
+        help="Total amount paid at the register (including tax)",
     )
-    tax_amount = fields.Monetary(
-        string="Tax Amount",
+    total_without_tax = fields.Monetary(
+        string="Subtotal",
+        required=True,
         currency_field="currency_id",
         tracking=True,
-        help="Tax portion of the total amount",
+        help="Amount before tax (subtotal on receipt)",
     )
-    untaxed_amount = fields.Monetary(
-        string="Untaxed Amount",
-        compute="_compute_untaxed_amount",
+    tax_amount = fields.Monetary(
+        string="Tax Paid",
+        compute="_compute_tax_amount",
         store=True,
         currency_field="currency_id",
-        help="Total amount minus tax",
+        help="Tax amount (calculated from total - subtotal)",
+    )
+    total_amount = fields.Monetary(
+        string="Total",
+        compute="_compute_total_amount",
+        store=True,
+        currency_field="currency_id",
+        help="Total amount (same as total paid)",
     )
     receipt_image = fields.Binary(
         string="Receipt Image",
@@ -71,22 +79,39 @@ class InventoryExpense(models.Model):
         default=lambda self: self.env.user,
         readonly=True,
     )
+    is_zero_value = fields.Boolean(
+        string="Zero Value",
+        compute="_compute_is_zero_value",
+        store=True,
+        help="Indicates if the expense has a zero total amount",
+    )
 
-    @api.depends("total_amount", "tax_amount")
-    def _compute_untaxed_amount(self):
+    @api.depends("total_with_tax")
+    def _compute_is_zero_value(self):
         for record in self:
-            tax = record.tax_amount or 0.0
-            record.untaxed_amount = record.total_amount - tax
+            record.is_zero_value = (
+                record.total_with_tax == 0 or record.total_with_tax is False
+            )
 
-    @api.constrains("total_amount", "tax_amount")
+    @api.depends("total_with_tax", "total_without_tax")
+    def _compute_tax_amount(self):
+        for record in self:
+            record.tax_amount = record.total_with_tax - record.total_without_tax
+
+    @api.depends("total_with_tax")
+    def _compute_total_amount(self):
+        for record in self:
+            record.total_amount = record.total_with_tax
+
+    @api.constrains("total_with_tax", "total_without_tax")
     def _check_amounts(self):
         for record in self:
-            if record.total_amount < 0:
-                raise ValidationError(_("Total amount cannot be negative."))
-            if record.tax_amount and record.tax_amount < 0:
-                raise ValidationError(_("Tax amount cannot be negative."))
-            if record.tax_amount and record.tax_amount > record.total_amount:
-                raise ValidationError(_("Tax amount cannot exceed total amount."))
+            if record.total_with_tax < 0:
+                raise ValidationError(_("Total paid cannot be negative."))
+            if record.total_without_tax < 0:
+                raise ValidationError(_("Subtotal cannot be negative."))
+            if record.total_without_tax > record.total_with_tax:
+                raise ValidationError(_("Subtotal cannot exceed total paid."))
 
     def name_get(self):
         result = []

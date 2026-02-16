@@ -43,8 +43,8 @@ class ExpenseReportWizard(models.TransientModel):
         compute="_compute_expenses",
         store=False,
     )
-    total_amount = fields.Monetary(
-        string="Total Amount",
+    total_with_tax = fields.Monetary(
+        string="Total Paid",
         compute="_compute_totals",
         currency_field="currency_id",
     )
@@ -53,8 +53,8 @@ class ExpenseReportWizard(models.TransientModel):
         compute="_compute_totals",
         currency_field="currency_id",
     )
-    total_untaxed = fields.Monetary(
-        string="Untaxed Amount",
+    total_without_tax = fields.Monetary(
+        string="Total Subtotal",
         compute="_compute_totals",
         currency_field="currency_id",
     )
@@ -92,9 +92,9 @@ class ExpenseReportWizard(models.TransientModel):
     def _compute_totals(self):
         for wizard in self:
             expenses = wizard.expense_ids
-            wizard.total_amount = sum(expenses.mapped("total_amount"))
+            wizard.total_with_tax = sum(expenses.mapped("total_with_tax"))
             wizard.total_tax = sum(expenses.mapped("tax_amount"))
-            wizard.total_untaxed = sum(expenses.mapped("untaxed_amount"))
+            wizard.total_without_tax = sum(expenses.mapped("total_without_tax"))
             wizard.expense_count = len(expenses)
 
     @api.onchange("date_from")
@@ -159,23 +159,23 @@ class ExpenseReportWizard(models.TransientModel):
 
         sheet["A6"] = "Total Expenses:"
         sheet["B6"] = self.expense_count
-        sheet["A7"] = "Total Amount:"
-        sheet["B7"] = self.total_amount
-        sheet["B7"].number_format = f"#,##0.00"
+        sheet["A7"] = "Total Paid:"
+        sheet["B7"] = self.total_with_tax
+        sheet["B7"].number_format = "#,##0.00"
         sheet["A8"] = "Total Tax:"
         sheet["B8"] = self.total_tax
-        sheet["B8"].number_format = f"#,##0.00"
-        sheet["A9"] = "Untaxed Amount:"
-        sheet["B9"] = self.total_untaxed
-        sheet["B9"].number_format = f"#,##0.00"
+        sheet["B8"].number_format = "#,##0.00"
+        sheet["A9"] = "Total Subtotal:"
+        sheet["B9"] = self.total_without_tax
+        sheet["B9"].number_format = "#,##0.00"
 
         start_row = 11
         headers = [
             "Date",
             "Expense Name",
-            "Total Amount",
-            "Tax Amount",
-            "Untaxed Amount",
+            "Subtotal",
+            "Total Paid",
+            "Tax Paid",
             "Created By",
         ]
         for col, header in enumerate(headers, 1):
@@ -190,11 +190,11 @@ class ExpenseReportWizard(models.TransientModel):
         for expense in self.expense_ids:
             sheet.cell(row=row, column=1).value = str(expense.date)
             sheet.cell(row=row, column=2).value = expense.name
-            sheet.cell(row=row, column=3).value = expense.total_amount
+            sheet.cell(row=row, column=3).value = expense.total_without_tax
             sheet.cell(row=row, column=3).number_format = "#,##0.00"
-            sheet.cell(row=row, column=4).value = expense.tax_amount or 0
+            sheet.cell(row=row, column=4).value = expense.total_with_tax
             sheet.cell(row=row, column=4).number_format = "#,##0.00"
-            sheet.cell(row=row, column=5).value = expense.untaxed_amount
+            sheet.cell(row=row, column=5).value = expense.tax_amount or 0
             sheet.cell(row=row, column=5).number_format = "#,##0.00"
             sheet.cell(row=row, column=6).value = expense.user_id.name or ""
 

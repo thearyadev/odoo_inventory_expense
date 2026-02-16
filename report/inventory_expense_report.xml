@@ -33,9 +33,9 @@
                                                 <td class="text-end"><strong t-field="doc.expense_count"/></td>
                                             </tr>
                                             <tr>
-                                                <td>Total Amount:</td>
+                                                <td>Total Paid:</td>
                                                 <td class="text-end">
-                                                    <strong t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                    <strong t-field="doc.total_with_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -45,9 +45,9 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td>Untaxed Amount:</td>
+                                                <td>Total Subtotal:</td>
                                                 <td class="text-end">
-                                                    <strong t-field="doc.total_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                                    <strong t-field="doc.total_without_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                                 </td>
                                             </tr>
                                         </table>
@@ -64,9 +64,9 @@
                                 <tr class="table-secondary">
                                     <th class="text-start">Date</th>
                                     <th class="text-start">Expense Name</th>
-                                    <th class="text-end">Total Amount</th>
-                                    <th class="text-end">Tax Amount</th>
-                                    <th class="text-end">Untaxed Amount</th>
+                                    <th class="text-end">Subtotal</th>
+                                    <th class="text-end">Total Paid</th>
+                                    <th class="text-end">Tax</th>
                                     <th class="text-start">Created By</th>
                                 </tr>
                             </thead>
@@ -75,13 +75,13 @@
                                     <td class="text-start"><span t-field="expense.date"/></td>
                                     <td class="text-start"><span t-field="expense.name"/></td>
                                     <td class="text-end">
-                                        <span t-field="expense.total_amount" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
+                                        <span t-field="expense.total_without_tax" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="expense.total_with_tax" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
                                     </td>
                                     <td class="text-end">
                                         <span t-field="expense.tax_amount" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
-                                    </td>
-                                    <td class="text-end">
-                                        <span t-field="expense.untaxed_amount" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
                                     </td>
                                     <td class="text-start"><span t-field="expense.user_id"/></td>
                                 </tr>
@@ -90,13 +90,13 @@
                                 <tr class="table-secondary fw-bold">
                                     <td class="text-start" colspan="2">TOTALS</td>
                                     <td class="text-end">
-                                        <span t-field="doc.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        <span t-field="doc.total_without_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="doc.total_with_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                     </td>
                                     <td class="text-end">
                                         <span t-field="doc.total_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
-                                    </td>
-                                    <td class="text-end">
-                                        <span t-field="doc.total_untaxed" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                     </td>
                                     <td></td>
                                 </tr>

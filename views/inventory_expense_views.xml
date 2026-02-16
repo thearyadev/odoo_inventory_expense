@@ -9,6 +9,9 @@
                 <header>
                 </header>
                 <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="is_zero_value == False">
+                        <strong>Warning:</strong> This expense has a zero total amount. Please verify if this is intentional.
+                    </div>
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="e.g., Costco Business - Office Supplies"/>
@@ -17,9 +20,10 @@
                     <group>
                         <group>
                             <field name="date"/>
-                            <field name="total_amount" widget="monetary"/>
-                            <field name="tax_amount" widget="monetary"/>
-                            <field name="untaxed_amount" widget="monetary" readonly="1"/>
+                            <field name="total_without_tax" widget="monetary" string="Subtotal"/>
+                            <field name="total_with_tax" widget="monetary" string="Total Paid"/>
+                            <field name="tax_amount" widget="monetary" readonly="1"/>
+                            <field name="total_amount" invisible="1"/>
                         </group>
                         <group>
                             <field name="company_id" groups="base.group_multi_company"/>
@@ -29,9 +33,12 @@
                     </group>
                     <group string="Receipt">
                         <field name="receipt_filename" invisible="1"/>
-                        <field name="receipt_image" widget="image" class="oe_avatar"
-                               filename="receipt_filename"
-                               placeholder="Upload receipt image"/>
+                        <div class="w-100">
+                            <field name="receipt_image" widget="image" class="w-100 o_wmx_max"
+                                   filename="receipt_filename"
+                                   placeholder="Upload receipt image"
+                                   options='{"size": [0, 0], "preview_image": "receipt_image"}'/>
+                        </div>
                     </group>
                     <group string="Notes">
                         <field name="notes" nolabel="1" placeholder="Additional details about this expense..."/>
@@ -51,15 +58,17 @@
         <field name="name">inventory.expense.tree</field>
         <field name="model">inventory.expense</field>
         <field name="arch" type="xml">
-            <list string="Inventory Expenses" decoration-bf="1">
+            <list string="Inventory Expenses" decoration-warning="is_zero_value">
+                <field name="is_zero_value" column_invisible="True"/>
                 <field name="date"/>
                 <field name="name"/>
-                <field name="total_amount" sum="Total" widget="monetary"/>
-                <field name="tax_amount" sum="Total Tax" widget="monetary"/>
-                <field name="untaxed_amount" sum="Untaxed Total" widget="monetary"/>
+                <field name="total_without_tax" sum="Subtotal" widget="monetary" optional="show"/>
+                <field name="total_with_tax" sum="Total Paid" widget="monetary"/>
+                <field name="tax_amount" sum="Tax Paid" widget="monetary" optional="show"/>
                 <field name="user_id" optional="show"/>
                 <field name="company_id" groups="base.group_multi_company" optional="hide"/>
                 <field name="currency_id" invisible="1"/>
+                <field name="total_amount" invisible="1"/>
             </list>
         </field>
     </record>
@@ -85,12 +94,20 @@
                 <filter string="Yesterday" name="yesterday"
                         domain="[('date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
                 <separator/>
+                <filter string="Zero Value" name="zero_value"
+                        domain="[('is_zero_value', '=', True)]"
+                        help="Show expenses with zero total amount"/>
+                <filter string="Non-Zero Value" name="non_zero_value"
+                        domain="[('is_zero_value', '=', False)]"
+                        help="Show expenses with non-zero total amount"/>
+                <separator/>
                 <group expand="0" string="Group By">
                     <filter string="Date" name="group_date" context="{'group_by': 'date'}"/>
                     <filter string="Month" name="group_month" context="{'group_by': 'date:month'}"/>
                     <filter string="Quarter" name="group_quarter" context="{'group_by': 'date:quarter'}"/>
                     <filter string="Year" name="group_year" context="{'group_by': 'date:year'}"/>
                     <filter string="Created By" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Zero Value" name="group_zero_value" context="{'group_by': 'is_zero_value'}"/>
                 </group>
             </search>
         </field>
@@ -103,9 +120,9 @@
         <field name="arch" type="xml">
             <pivot string="Expense Analysis" sample="1">
                 <field name="date" interval="month" type="row"/>
-                <field name="total_amount" type="measure"/>
+                <field name="total_with_tax" type="measure"/>
                 <field name="tax_amount" type="measure"/>
-                <field name="untaxed_amount" type="measure"/>
+                <field name="total_without_tax" type="measure"/>
             </pivot>
         </field>
     </record>
@@ -117,7 +134,7 @@
         <field name="arch" type="xml">
             <graph string="Expense Trends" sample="1">
                 <field name="date" interval="month"/>
-                <field name="total_amount" type="measure"/>
+                <field name="total_with_tax" type="measure"/>
             </graph>
         </field>
     </record>

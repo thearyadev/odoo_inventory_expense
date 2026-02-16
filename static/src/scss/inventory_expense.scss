@@ -1,0 +1,48 @@
+.inventory_expense_receipt_container {
+    .o_form_view & {
+        .o_field_image {
+            img {
+                max-width: 100%;
+                height: auto;
+                object-fit: contain;
+            }
+        }
+    }
+}
+
+.o_form_view {
+    .o_group .o_group_col_6 {
+        @media (max-width: 575.98px) {
+            .o_field_widget.o_field_image {
+                img {
+                    max-height: 200px;
+                    width: auto;
+                    margin: 0 auto;
+                    display: block;
+                }
+            }
+        }
+    }
+}
+
+.o_field_widget.o_field_image {
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 575.98px) {
+        img {
+            max-height: 250px;
+            object-fit: cover;
+        }
+    }
+    
+    @media (min-width: 576px) {
+        img {
+            max-height: none;
+        }
+    }
+}
