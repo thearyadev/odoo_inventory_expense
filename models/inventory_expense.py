@@ -85,6 +85,12 @@ class InventoryExpense(models.Model):
         store=True,
         help="Indicates if the expense has a zero total amount",
     )
+    needs_review = fields.Boolean(
+        string="Needs Review",
+        default=False,
+        tracking=True,
+        help="Indicates the expense data needs to be verified by a user",
+    )
 
     @api.depends("total_with_tax")
     def _compute_is_zero_value(self):

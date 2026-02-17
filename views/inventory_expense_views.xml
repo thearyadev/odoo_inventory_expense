@@ -12,6 +12,9 @@
                     <div class="alert alert-warning" role="alert" invisible="is_zero_value == False">
                         <strong>Warning:</strong> This expense has a zero total amount. Please verify if this is intentional.
                     </div>
+                    <div class="alert alert-info" role="alert" invisible="needs_review == False">
+                        <strong>Review Required:</strong> This expense was created via AI extraction. Please verify the extracted values are correct, then uncheck "Needs Review".
+                    </div>
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="e.g., Costco Business - Office Supplies"/>
@@ -29,6 +32,7 @@
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="user_id" readonly="1"/>
+                            <field name="needs_review"/>
                         </group>
                     </group>
                     <group string="Receipt">
@@ -58,8 +62,13 @@
         <field name="name">inventory.expense.tree</field>
         <field name="model">inventory.expense</field>
         <field name="arch" type="xml">
-            <list string="Inventory Expenses" decoration-warning="is_zero_value">
+            <list string="Inventory Expenses" decoration-warning="is_zero_value" decoration-info="needs_review">
+                <header>
+                    <button name="%(quick_add_wizard_action)d" type="action" string="Quick Add" class="btn-primary" display="always"/>
+                    <button name="%(quick_add_wizard_action)d" type="action" string="Quick Add with AI" class="btn-secondary" display="always"/>
+                </header>
                 <field name="is_zero_value" column_invisible="True"/>
+                <field name="needs_review" column_invisible="True"/>
                 <field name="date"/>
                 <field name="name"/>
                 <field name="total_without_tax" sum="Subtotal" widget="monetary" optional="show"/>
@@ -100,6 +109,13 @@
                 <filter string="Non-Zero Value" name="non_zero_value"
                         domain="[('is_zero_value', '=', False)]"
                         help="Show expenses with non-zero total amount"/>
+                <separator/>
+                <filter string="Needs Review" name="needs_review"
+                        domain="[('needs_review', '=', True)]"
+                        help="Show expenses that need verification"/>
+                <filter string="Reviewed" name="reviewed"
+                        domain="[('needs_review', '=', False)]"
+                        help="Show expenses that have been verified"/>
                 <separator/>
                 <group expand="0" string="Group By">
                     <filter string="Date" name="group_date" context="{'group_by': 'date'}"/>

@@ -27,9 +27,11 @@ Features:
     "depends": ["base", "web", "mail"],
     "data": [
         "security/ir.model.access.csv",
+        "wizard/quick_add_wizard_views.xml",
         "views/inventory_expense_views.xml",
         "report/inventory_expense_report.xml",
         "wizard/expense_report_wizard_views.xml",
+        "views/res_config_settings_views.xml",
     ],
     "assets": {
         "web.assets_backend": [
