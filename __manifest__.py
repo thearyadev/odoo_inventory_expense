@@ -35,7 +35,7 @@ Features:
     ],
     "assets": {
         "web.assets_backend": [
-            "inventory_expense/static/src/scss/inventory_expense.scss",
+            "odoo_inventory_expense/static/src/scss/inventory_expense.scss",
         ],
     },
     "installable": True,
