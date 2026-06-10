@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="report_inventory_expense">
+    <template id="report_business_expense">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="doc">
                 <t t-call="web.external_layout">
                     <div class="page">
                         <div class="oe_structure"/>
-                        <h2>Inventory Expense Report</h2>
+                        <h2>Business Expense Report</h2>
                         <div class="row mt-3">
                             <div class="col-6">
                                 <strong>Period:</strong>
@@ -58,12 +58,14 @@
                         
                         <div class="oe_structure"/>
                         
-                        <h4 class="mt-4">Expense Details</h4>
-                        <table class="table table-sm table-striped mt-2">
+                        <h4 class="mt-4" t-if="doc.report_type == 'detailed'">Expense Details</h4>
+                        <table class="table table-sm table-striped mt-2" t-if="doc.report_type == 'detailed'">
                             <thead>
                                 <tr class="table-secondary">
                                     <th class="text-start">Date</th>
                                     <th class="text-start">Expense Name</th>
+                                    <th class="text-start">Category</th>
+                                    <th class="text-start">Payment Account</th>
                                     <th class="text-end">Subtotal</th>
                                     <th class="text-end">Total Paid</th>
                                     <th class="text-end">Tax</th>
@@ -74,6 +76,8 @@
                                 <tr t-foreach="doc.expense_ids" t-as="expense">
                                     <td class="text-start"><span t-field="expense.date"/></td>
                                     <td class="text-start"><span t-field="expense.name"/></td>
+                                    <td class="text-start"><span t-field="expense.category_id"/></td>
+                                    <td class="text-start"><span t-field="expense.account_id"/></td>
                                     <td class="text-end">
                                         <span t-field="expense.total_without_tax" t-options='{"widget": "monetary", "display_currency": expense.currency_id}'/>
                                     </td>
@@ -88,7 +92,7 @@
                             </tbody>
                             <tfoot>
                                 <tr class="table-secondary fw-bold">
-                                    <td class="text-start" colspan="2">TOTALS</td>
+                                    <td class="text-start" colspan="4">TOTALS</td>
                                     <td class="text-end">
                                         <span t-field="doc.total_without_tax" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
                                     </td>
@@ -110,12 +114,12 @@
         </t>
     </template>
 
-    <record id="action_report_inventory_expense" model="ir.actions.report">
-        <field name="name">Inventory Expense Report</field>
-        <field name="model">expense.report.wizard</field>
+    <record id="action_report_business_expense" model="ir.actions.report">
+        <field name="name">Business Expense Report</field>
+        <field name="model">business.expense.report.wizard</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">inventory_expense.report_inventory_expense</field>
-        <field name="report_file">inventory_expense.report_inventory_expense</field>
+        <field name="report_name">business_expense.report_business_expense</field>
+        <field name="report_file">business_expense.report_business_expense</field>
         <field name="print_report_name">'Expense Report - %s to %s' % (object.date_from, object.date_to)</field>
     </record>
 </odoo>

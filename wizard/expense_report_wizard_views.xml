@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="expense_report_wizard_view_form" model="ir.ui.view">
-        <field name="name">expense.report.wizard.form</field>
-        <field name="model">expense.report.wizard</field>
+        <field name="name">business.expense.report.wizard.form</field>
+        <field name="model">business.expense.report.wizard</field>
         <field name="arch" type="xml">
             <form string="Generate Expense Report">
                 <group>
@@ -11,6 +11,8 @@
                         <field name="date_to"/>
                         <field name="report_type"/>
                         <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="category_id"/>
+                        <field name="account_id"/>
                     </group>
                     <group>
                         <field name="expense_count" readonly="1"/>
@@ -26,6 +28,8 @@
                             <list create="0" delete="0" edit="0">
                                 <field name="date"/>
                                 <field name="name"/>
+                                <field name="category_id"/>
+                                <field name="account_id"/>
                                 <field name="total_without_tax" widget="monetary" string="Subtotal"/>
                                 <field name="total_with_tax" widget="monetary" string="Total Paid"/>
                                 <field name="tax_amount" widget="monetary" string="Tax"/>

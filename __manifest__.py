@@ -1,20 +1,22 @@
 {
-    "name": "Inventory Expense Logger",
-    "version": "1.0.0",
-    "category": "Inventory",
+    "name": "Business Expense Logger",
+    "version": "18.0.1.0.0",
+    "category": "Accounting/Expenses",
     "sequence": 25,
-    "summary": "Log inventory purchase expenses with receipt tracking and reporting",
+    "summary": "Log business expenses with categories, payment accounts, receipts, and reporting",
     "description": """
-Inventory Expense Logger
-========================
+Business Expense Logger
+=======================
 
-This application allows you to log basic inventory expenses from retailers
-like Costco Business. Staff can record purchases with receipt uploads,
-track total expenses and taxes, and generate date-based reports.
+This application allows staff to record general business expenses with
+receipt uploads, category tracking, payment account tracking, and
+date-based reporting.
 
 Features:
 ---------
 * Simple expense creation with receipt image upload
+* Configurable hierarchical expense categories
+* Configurable payment accounts with card/account metadata
 * Track total amount and tax paid per expense
 * Date-based filtering and reporting
 * Excel export for expense reports
@@ -28,14 +30,14 @@ Features:
     "data": [
         "security/ir.model.access.csv",
         "wizard/quick_add_wizard_views.xml",
-        "views/inventory_expense_views.xml",
-        "report/inventory_expense_report.xml",
+        "views/business_expense_views.xml",
+        "report/business_expense_report.xml",
         "wizard/expense_report_wizard_views.xml",
         "views/res_config_settings_views.xml",
     ],
     "assets": {
         "web.assets_backend": [
-            "odoo_inventory_expense/static/src/scss/inventory_expense.scss",
+            "business_expense/static/src/scss/business_expense.scss",
         ],
     },
     "installable": True,

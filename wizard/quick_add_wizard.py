@@ -19,7 +19,7 @@ Return the result as a JSON object with these exact keys: vendor_name, date, sub
 
 
 class QuickAddWizard(models.TransientModel):
-    _name = "quick.add.wizard"
+    _name = "business.expense.quick.add.wizard"
     _description = "Quick Add Expense Wizard"
 
     receipt_file = fields.Binary(
@@ -29,6 +29,23 @@ class QuickAddWizard(models.TransientModel):
     )
     receipt_filename = fields.Char(
         string="Filename",
+    )
+    category_id = fields.Many2one(
+        comodel_name="business.expense.category",
+        string="Category",
+        required=True,
+    )
+    account_id = fields.Many2one(
+        comodel_name="business.expense.account",
+        string="Payment Account",
+        required=True,
+        check_company=True,
+    )
+    company_id = fields.Many2one(
+        comodel_name="res.company",
+        string="Company",
+        required=True,
+        default=lambda self: self.env.company,
     )
 
     def _get_mime_type(self):
@@ -68,7 +85,7 @@ class QuickAddWizard(models.TransientModel):
     def _get_config(self):
         get_param = self.env["ir.config_parameter"].sudo().get_param
         return {
-            "model": get_param("inventory_expense.openai_model", default="gpt-4o-mini"),
+            "model": get_param("business_expense.openai_model", default="gpt-4o-mini"),
             "prompt": DEFAULT_EXTRACTION_PROMPT,
         }
 
@@ -141,9 +158,12 @@ class QuickAddWizard(models.TransientModel):
         else:
             parsed_date = today
 
-        expense = self.env["inventory.expense"].create(
+        expense = self.env["business.expense"].create(
             {
                 "name": name,
+                "category_id": self.category_id.id,
+                "account_id": self.account_id.id,
+                "company_id": self.company_id.id,
                 "date": parsed_date,
                 "total_without_tax": subtotal if subtotal is not None else 0.0,
                 "total_with_tax": total if total is not None else 0.0,
@@ -168,7 +188,7 @@ class QuickAddWizard(models.TransientModel):
         return {
             "type": "ir.actions.act_window",
             "name": _("Expense Created"),
-            "res_model": "inventory.expense",
+            "res_model": "business.expense",
             "res_id": expense.id,
             "view_mode": "form",
             "target": "current",
@@ -205,7 +225,7 @@ class QuickAddWizard(models.TransientModel):
             return {
                 "type": "ir.actions.act_window",
                 "name": _("Expense Created"),
-                "res_model": "inventory.expense",
+                "res_model": "business.expense",
                 "res_id": expense.id,
                 "view_mode": "form",
                 "target": "current",
@@ -217,7 +237,7 @@ class QuickAddWizard(models.TransientModel):
             return {
                 "type": "ir.actions.act_window",
                 "name": _("Expense Created"),
-                "res_model": "inventory.expense",
+                "res_model": "business.expense",
                 "res_id": expense.id,
                 "view_mode": "form",
                 "target": "current",

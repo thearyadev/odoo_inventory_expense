@@ -1,7 +1,6 @@
 import io
 import base64
-from datetime import date, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import date
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -15,7 +14,7 @@ except ImportError:
 
 
 class ExpenseReportWizard(models.TransientModel):
-    _name = "expense.report.wizard"
+    _name = "business.expense.report.wizard"
     _description = "Expense Report Wizard"
 
     date_from = fields.Date(
@@ -38,10 +37,19 @@ class ExpenseReportWizard(models.TransientModel):
         required=True,
     )
     expense_ids = fields.Many2many(
-        comodel_name="inventory.expense",
+        comodel_name="business.expense",
         string="Expenses",
         compute="_compute_expenses",
         store=False,
+    )
+    category_id = fields.Many2one(
+        comodel_name="business.expense.category",
+        string="Category",
+    )
+    account_id = fields.Many2one(
+        comodel_name="business.expense.account",
+        string="Payment Account",
+        check_company=True,
     )
     total_with_tax = fields.Monetary(
         string="Total Paid",
@@ -65,24 +73,31 @@ class ExpenseReportWizard(models.TransientModel):
     currency_id = fields.Many2one(
         comodel_name="res.currency",
         string="Currency",
-        default=lambda self: self.env.company.currency_id,
+        related="company_id.currency_id",
+        readonly=True,
     )
     company_id = fields.Many2one(
         comodel_name="res.company",
         string="Company",
+        required=True,
         default=lambda self: self.env.company,
     )
 
-    @api.depends("date_from", "date_to")
+    @api.depends("date_from", "date_to", "category_id", "account_id", "company_id")
     def _compute_expenses(self):
         for wizard in self:
             if wizard.date_from and wizard.date_to:
-                wizard.expense_ids = self.env["inventory.expense"].search(
-                    [
-                        ("date", ">=", wizard.date_from),
-                        ("date", "<=", wizard.date_to),
-                        ("company_id", "=", wizard.company_id.id),
-                    ],
+                domain = [
+                    ("date", ">=", wizard.date_from),
+                    ("date", "<=", wizard.date_to),
+                    ("company_id", "=", wizard.company_id.id),
+                ]
+                if wizard.category_id:
+                    domain.append(("category_id", "child_of", wizard.category_id.id))
+                if wizard.account_id:
+                    domain.append(("account_id", "=", wizard.account_id.id))
+                wizard.expense_ids = self.env["business.expense"].search(
+                    domain,
                     order="date desc",
                 )
             else:
@@ -111,7 +126,7 @@ class ExpenseReportWizard(models.TransientModel):
     def action_generate_pdf(self):
         self.ensure_one()
         return self.env.ref(
-            "inventory_expense.action_report_inventory_expense"
+            "business_expense.action_report_business_expense"
         ).report_action(self)
 
     def action_export_excel(self):
@@ -129,7 +144,6 @@ class ExpenseReportWizard(models.TransientModel):
 
         header_font = Font(bold=True, size=12)
         title_font = Font(bold=True, size=14)
-        currency_font = Font(bold=True)
         border = Border(
             left=Side(style="thin"),
             right=Side(style="thin"),
@@ -142,17 +156,16 @@ class ExpenseReportWizard(models.TransientModel):
         header_font_white = Font(bold=True, color="FFFFFF")
 
         company = self.company_id
-        currency = self.currency_id
 
-        sheet["A1"] = "Inventory Expense Report"
+        sheet["A1"] = "Business Expense Report"
         sheet["A1"].font = title_font
-        sheet.merge_cells("A1:E1")
+        sheet.merge_cells("A1:H1")
 
         sheet["A2"] = f"Period: {self.date_from} to {self.date_to}"
-        sheet.merge_cells("A2:E2")
+        sheet.merge_cells("A2:H2")
 
         sheet["A3"] = f"Company: {company.name}"
-        sheet.merge_cells("A3:E3")
+        sheet.merge_cells("A3:H3")
 
         sheet["A5"] = "Summary"
         sheet["A5"].font = header_font
@@ -169,40 +182,55 @@ class ExpenseReportWizard(models.TransientModel):
         sheet["B9"] = self.total_without_tax
         sheet["B9"].number_format = "#,##0.00"
 
-        start_row = 11
-        headers = [
-            "Date",
-            "Expense Name",
-            "Subtotal",
-            "Total Paid",
-            "Tax Paid",
-            "Created By",
+        if self.report_type == "detailed":
+            start_row = 11
+            headers = [
+                "Date",
+                "Expense Name",
+                "Category",
+                "Payment Account",
+                "Subtotal",
+                "Total Paid",
+                "Tax Paid",
+                "Created By",
+            ]
+            for col, header in enumerate(headers, 1):
+                cell = sheet.cell(row=start_row, column=col)
+                cell.value = header
+                cell.font = header_font_white
+                cell.fill = header_fill
+                cell.border = border
+                cell.alignment = Alignment(horizontal="center")
+
+            row = start_row + 1
+            for expense in self.expense_ids:
+                sheet.cell(row=row, column=1).value = str(expense.date)
+                sheet.cell(row=row, column=2).value = expense.name
+                sheet.cell(row=row, column=3).value = expense.category_id.display_name
+                sheet.cell(row=row, column=4).value = expense.account_id.display_name
+                sheet.cell(row=row, column=5).value = expense.total_without_tax
+                sheet.cell(row=row, column=5).number_format = "#,##0.00"
+                sheet.cell(row=row, column=6).value = expense.total_with_tax
+                sheet.cell(row=row, column=6).number_format = "#,##0.00"
+                sheet.cell(row=row, column=7).value = expense.tax_amount or 0
+                sheet.cell(row=row, column=7).number_format = "#,##0.00"
+                sheet.cell(row=row, column=8).value = expense.user_id.name or ""
+
+                for col in range(1, 9):
+                    sheet.cell(row=row, column=col).border = border
+                row += 1
+
+        column_widths = [
+            (1, 12),
+            (2, 40),
+            (3, 24),
+            (4, 28),
+            (5, 15),
+            (6, 15),
+            (7, 15),
+            (8, 20),
         ]
-        for col, header in enumerate(headers, 1):
-            cell = sheet.cell(row=start_row, column=col)
-            cell.value = header
-            cell.font = header_font_white
-            cell.fill = header_fill
-            cell.border = border
-            cell.alignment = Alignment(horizontal="center")
-
-        row = start_row + 1
-        for expense in self.expense_ids:
-            sheet.cell(row=row, column=1).value = str(expense.date)
-            sheet.cell(row=row, column=2).value = expense.name
-            sheet.cell(row=row, column=3).value = expense.total_without_tax
-            sheet.cell(row=row, column=3).number_format = "#,##0.00"
-            sheet.cell(row=row, column=4).value = expense.total_with_tax
-            sheet.cell(row=row, column=4).number_format = "#,##0.00"
-            sheet.cell(row=row, column=5).value = expense.tax_amount or 0
-            sheet.cell(row=row, column=5).number_format = "#,##0.00"
-            sheet.cell(row=row, column=6).value = expense.user_id.name or ""
-
-            for col in range(1, 7):
-                sheet.cell(row=row, column=col).border = border
-            row += 1
-
-        for col, width in [(1, 12), (2, 40), (3, 15), (4, 15), (5, 15), (6, 20)]:
+        for col, width in column_widths:
             sheet.column_dimensions[get_column_letter(col)].width = width
 
         buffer = io.BytesIO()
